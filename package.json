@@ -3,9 +3,26 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "format": "prettier --write \"*.js\"  \"*/*.js\"  \"*.json\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
-  "description": ""
+  "license": "GPL-3.0-or-later",
+  "description": "",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "commitizen": "^4.2.2",
+    "cz-conventional-changelog": "^3.3.0",
+    "lodash": "^4.17.20",
+    "moment": "^2.29.1",
+    "prettier": "^2.2.1",
+    "promise": "^8.1.0",
+    "request": "^2.88.2",
+    "shelljs": "^0.8.4",
+    "xlsx": "^0.16.9"
+  }
 }
