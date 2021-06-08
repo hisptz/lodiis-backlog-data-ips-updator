@@ -1,4 +1,4 @@
-const { sourceConfig } = require("../configs");
+const { sourceConfig,implementingPartnerReferrence } = require("../configs");
 
 const dhis2UtilHelper = require("../helpers/dhis2-util.helper");
 const logsHelper = require("../helpers/logs.helper");
@@ -10,7 +10,7 @@ async function startAppProcess() {
       username,
       password
     );
-    console.log({ serverUrl, headers });
+    console.log({ serverUrl, headers,implementingPartnerReferrence });
   } catch (error) {
     await logsHelper.addLogs(
       "error",
