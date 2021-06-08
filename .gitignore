@@ -1,0 +1,10 @@
+*.txt
+*.xls*
+*.zip
+.vscode
+node_modules
+configs/server-config.js
+configs/file-path-config.js
+*.DS_Store
+
+files/*
