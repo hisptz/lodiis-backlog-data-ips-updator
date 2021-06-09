@@ -17,7 +17,8 @@ async function getUserInfoFromServer(
     const fields = `fields=id,userCredentials[username],attributeValues[value,attribute[id]]`;
     await logsHelper.addLogs(
       "info",
-      `Discovering paginations for user info from :: ${userUrl}`
+      `Discovering paginations for user info from :: ${userUrl}`,
+      "getUserInfoFromServer"
     );
     const paginationFilters =
       await dhis2UtilHelper.getDhis2ResourcePaginationFromServer(
@@ -29,7 +30,8 @@ async function getUserInfoFromServer(
       count++;
       await logsHelper.addLogs(
         "info",
-        `Discovering users info from :: ${userUrl} ::: ${count} of ${paginationFilters.length}`
+        `Discovering users info from :: ${userUrl} ::: ${count} of ${paginationFilters.length}`,
+        "getUserInfoFromServer"
       );
       const url = `${userUrl}?${fields}&${paginationFilter}`;
       const response = await httpHelper.getHttp(headers, url);
