@@ -6,6 +6,7 @@ const dhis2UserHelper = require("../helpers/dhis2-user.helper");
 const dhis2EventHelper = require("../helpers/dhis2-event.helper");
 const dhis2UtilHelper = require("../helpers/dhis2-util.helper");
 const logsHelper = require("../helpers/logs.helper");
+const { writeToFile } = require("../helpers/file-manipulation.helper");
 
 async function startAppProcess() {
   try {
@@ -36,7 +37,20 @@ async function startAppProcess() {
         users,
         program
       );
-      if (events.length > 0) console.log(`${JSON.stringify(events)}\n\n`);
+      if (events.length > 0) {
+        writeToFile("output", program.name, events);
+        const response = await dhis2EventHelper.uploadEventsToTheServer(
+          headers,
+          serverUrl,
+          events
+        );
+        const date = dhis2UtilHelper.getFormattedDate(new Date());
+        writeToFile(
+          "response",
+          `[${program.name}] server response ${date}`,
+          response
+        );
+      }
     }
   } catch (error) {
     await logsHelper.addLogs(

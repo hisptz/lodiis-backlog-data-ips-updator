@@ -1,8 +1,47 @@
-const { flattenDeep, map, omit, find, concat, filter } = require("lodash");
+const {
+  flattenDeep,
+  map,
+  omit,
+  find,
+  concat,
+  filter,
+  chunk,
+} = require("lodash");
 
 const dhis2UtilHelper = require("./dhis2-util.helper");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
+
+async function uploadEventsToTheServer(headers, serverUrl, data) {
+  let count = 0;
+  const serverResponse = [];
+  const batchSize = 200;
+  try {
+    const url = `${serverUrl}/api/events?strategy=CREATE_AND_UPDATE`;
+    const total = chunk(data, batchSize).length;
+    for (const events of chunk(data, batchSize)) {
+      count++;
+      console.log(`Uploading Events : ${count} of ${total}`);
+      try {
+        for (const eventData of chunk(events, 50)) {
+          const response = await httpHelper.postHttp(headers, url, {
+            events: eventData,
+          });
+          serverResponse.push(response);
+        }
+      } catch (error) {
+        console.log(error.message || error);
+      }
+    }
+  } catch (error) {
+    await logsHelper.addLogs(
+      "error",
+      error.message || error,
+      "uploadEventsToTheServer"
+    );
+  }
+  return flattenDeep(serverResponse);
+}
 
 async function getEventsFromServer(
   headers,
@@ -13,7 +52,7 @@ async function getEventsFromServer(
 ) {
   const sanitizedEvents = [];
   try {
-    const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[dataElement,value]`;
+    const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[*]`;
     const { id: programId, name: programName } = program;
     const eventUrl = `${serverUrl}/api/events.json?program=${programId}`;
     await logsHelper.addLogs(
@@ -35,7 +74,7 @@ async function getEventsFromServer(
         `Discovering events for program :: ${programName} :: ${count} of ${paginationFilters.length}`,
         "getEventsFromServer"
       );
-      const url = `${eventUrl}&${fields}&${paginationFilter}`;
+      const url = `${eventUrl}&${fields}&${paginationFilter}&order=created:DESC`;
       const response = await httpHelper.getHttp(headers, url);
       const events = getSanitizedEvents(
         response.events || [],
@@ -91,7 +130,7 @@ function getSanitizedEvents(events, implementingPartnerReferrence, users) {
             dataValue && dataValue.dataElement === implementingPartnerReferrence
         );
         dataValues = implementingPartnerDataValue
-          ? eventObj.dataValues || []
+          ? []
           : concat(
               filter(
                 eventObj.dataValues || [],
@@ -106,8 +145,8 @@ function getSanitizedEvents(events, implementingPartnerReferrence, users) {
             );
       }
     }
-    return { ...eventObj, dataValues };
+    return dataValues.length > 0 ? { ...eventObj, dataValues } : [];
   });
 }
 
-module.exports = { getEventsFromServer };
+module.exports = { getEventsFromServer, uploadEventsToTheServer };
