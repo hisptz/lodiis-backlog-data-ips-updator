@@ -54,7 +54,7 @@ async function getEventsFromServer(
   try {
     const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[*]`;
     const { id: programId, name: programName } = program;
-    const eventUrl = `${serverUrl}/api/events.json?program=${programId}`;
+    const eventUrl = `${serverUrl}/api/events.json`;
     await logsHelper.addLogs(
       "info",
       `Discovering event's paginations for program :: ${programName}`,
@@ -64,7 +64,8 @@ async function getEventsFromServer(
       await dhis2UtilHelper.getDhis2ResourcePaginationFromServer(
         headers,
         eventUrl,
-        500
+        500,
+        `&program=${programId}&totalPages=true`
       );
     let count = 0;
     for (const paginationFilter of paginationFilters) {
@@ -74,7 +75,7 @@ async function getEventsFromServer(
         `Discovering events for program :: ${programName} :: ${count} of ${paginationFilters.length}`,
         "getEventsFromServer"
       );
-      const url = `${eventUrl}&${fields}&${paginationFilter}&order=created:DESC`;
+      const url = `${eventUrl}?program=${programId}&${fields}&${paginationFilter}&order=created:DESC`;
       const response = await httpHelper.getHttp(headers, url);
       const events = getSanitizedEvents(
         response.events || [],

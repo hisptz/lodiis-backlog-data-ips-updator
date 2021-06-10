@@ -13,7 +13,7 @@ async function getUserInfoFromServer(
 ) {
   const usersInfo = [];
   try {
-    const userUrl = `${serverUrl}/api/users.json`;
+    const userUrl = `${serverUrl}/api/users.json?`;
     const fields = `fields=id,userCredentials[username],attributeValues[value,attribute[id]]`;
     await logsHelper.addLogs(
       "info",
@@ -33,7 +33,7 @@ async function getUserInfoFromServer(
         `Discovering users info from :: ${userUrl} ::: ${count} of ${paginationFilters.length}`,
         "getUserInfoFromServer"
       );
-      const url = `${userUrl}?${fields}&${paginationFilter}`;
+      const url = `${userUrl}${fields}&${paginationFilter}`;
       const response = await httpHelper.getHttp(headers, url);
       usersInfo.push(
         getSanitizedUserInfo(response.users || [], implementingPartnerOptions)

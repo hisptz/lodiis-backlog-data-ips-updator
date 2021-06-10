@@ -8,13 +8,13 @@ async function startApp() {
     await logsHelper.clearLogs();
     await logsHelper.addLogs(
       "info",
-      `Start of script for generating user info`,
+      `Start of script for generating ips for events`,
       "startApp"
     );
     await app.startAppProcess();
     await logsHelper.addLogs(
       "info",
-      `End of script for generating user info`,
+      `End of script for generating ips for events`,
       "startApp"
     );
   } catch (error) {
