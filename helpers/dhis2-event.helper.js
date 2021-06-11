@@ -12,7 +12,7 @@ const dhis2UtilHelper = require("./dhis2-util.helper");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
-async function uploadEventsToTheServer(headers, serverUrl, data) {
+async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
   let count = 0;
   const serverResponse = [];
   const batchSize = 200;
@@ -21,7 +21,11 @@ async function uploadEventsToTheServer(headers, serverUrl, data) {
     const total = chunk(data, batchSize).length;
     for (const events of chunk(data, batchSize)) {
       count++;
-      console.log(`Uploading Events : ${count} of ${total}`);
+      await logsHelper.addLogs(
+        "info",
+        `Uploading event data for :: ${programName} ::: ${count} of ${total}`,
+        `uploadEventsToTheServer`
+      );
       try {
         for (const eventData of chunk(events, 50)) {
           const response = await httpHelper.postHttp(headers, url, {

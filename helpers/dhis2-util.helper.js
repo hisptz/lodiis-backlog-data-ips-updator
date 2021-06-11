@@ -20,11 +20,14 @@ async function getDhis2ResourcePaginationFromServer(
   headers,
   resourceUrl,
   pageSize = 100,
-  filters=""
+  filters = ""
 ) {
   const paginationFilters = [];
   try {
-    const url = filters != "" ? `${resourceUrl}?fields=none&pageSize=1${filters}` : `${resourceUrl}?fields=none&pageSize=1`;
+    const url =
+      filters != ""
+        ? `${resourceUrl}?fields=none&pageSize=1${filters}`
+        : `${resourceUrl}?fields=none&pageSize=1`;
     const response = await httpHelper.getHttp(headers, url);
     const pager = response.pager || {};
     const total = pager.total || pageSize;

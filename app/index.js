@@ -42,7 +42,8 @@ async function startAppProcess() {
         const response = await dhis2EventHelper.uploadEventsToTheServer(
           headers,
           serverUrl,
-          events
+          events,
+          program.name
         );
         const date = dhis2UtilHelper.getFormattedDate(new Date());
         writeToFile(
