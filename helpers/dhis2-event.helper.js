@@ -47,10 +47,12 @@ async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
   return flattenDeep(serverResponse);
 }
 
+//@TODO sub implementing partners
 async function getEventsFromServer(
   headers,
   serverUrl,
   implementingPartnerReferrence,
+  subImplementingPartnerReferrence,
   users,
   program
 ) {
@@ -129,6 +131,7 @@ function getSanitizedEvents(events, implementingPartnerReferrence, users) {
                 userObj.username == eventObj.storedBy
             );
       if (user && user.implementingPartner) {
+        //@TODO handling implementing and sub implementing partner
         const implementingPartnerDataValue = find(
           eventObj.dataValues || [],
           (dataValue) =>

@@ -5,11 +5,24 @@ const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
 const implementingPartnerAttributeId = "wpiLo7DTwKF";
+const subImplementingPartnerAttributeId = "P7YnaTZTSKl";
+
+function getUserAttributeById(user, attributeId) {
+  return find(
+    user.attributeValues || [],
+    (attributeValue) =>
+      attributeValue &&
+      attributeValue.attribute &&
+      attributeValue.attribute.id &&
+      attributeValue.attribute.id === attributeId
+  );
+}
 
 async function getUserInfoFromServer(
   headers,
   serverUrl,
-  implementingPartnerOptions
+  implementingPartnerOptions,
+  subImplementingPartnerOptions
 ) {
   const usersInfo = [];
   try {
@@ -36,7 +49,11 @@ async function getUserInfoFromServer(
       const url = `${userUrl}${fields}&${paginationFilter}`;
       const response = await httpHelper.getHttp(headers, url);
       usersInfo.push(
-        getSanitizedUserInfo(response.users || [], implementingPartnerOptions)
+        getSanitizedUserInfo(
+          response.users || [],
+          implementingPartnerOptions,
+          subImplementingPartnerOptions
+        )
       );
     }
   } catch (error) {
@@ -49,38 +66,58 @@ async function getUserInfoFromServer(
   return flattenDeep(usersInfo);
 }
 
-function getSanitizedUserInfo(users, implementingPartnerOptions) {
+function getSanitizedUserInfo(
+  users,
+  implementingPartnerOptions,
+  subImplementingPartnerOptions
+) {
   return map(users, (user) => {
     const id = user.id || "";
     const userCredentials = user.userCredentials || {};
     const username = userCredentials.username || "";
     let implementingPartner = "";
-    const attributeValueObj = find(
-      user.attributeValues || [],
-      (attributeValue) =>
-        attributeValue &&
-        attributeValue.attribute &&
-        attributeValue.attribute.id &&
-        attributeValue.attribute.id === implementingPartnerAttributeId
+    let subImplementingPartner = "";
+    const implementingPartnerAttributeValueObj = getUserAttributeById(
+      user,
+      implementingPartnerAttributeId
     );
-    if (attributeValueObj) {
+    const subImplementingPartnerAttributeValueObj = getUserAttributeById(
+      user,
+      subImplementingPartnerAttributeId
+    );
+    if (implementingPartnerAttributeValueObj) {
       const implementingPartnerOption = find(
         implementingPartnerOptions,
         (option) =>
           option &&
           option.id &&
-          attributeValueObj.value &&
-          option.id == attributeValueObj.value
+          implementingPartnerAttributeValueObj.value &&
+          option.id == implementingPartnerAttributeValueObj.value
       );
       implementingPartner =
         implementingPartnerOption && implementingPartnerOption.code
           ? implementingPartnerOption.code
           : implementingPartner;
     }
+    if (subImplementingPartnerAttributeValueObj) {
+      const subImplementingPartnerOption = find(
+        subImplementingPartnerOptions,
+        (option) =>
+          option &&
+          option.id &&
+          subImplementingPartnerAttributeValueObj.value &&
+          option.id == subImplementingPartnerAttributeValueObj.value
+      );
+      subImplementingPartner =
+        subImplementingPartnerOption && subImplementingPartnerOption.code
+          ? subImplementingPartnerOption.code
+          : subImplementingPartner;
+    }
     return {
       id,
       username,
       implementingPartner,
+      subImplementingPartner,
     };
   });
 }
