@@ -3,29 +3,27 @@ const { flattenDeep } = require("lodash");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
-const implementingPartnerOptionSetId = "mMUDhf2vSwq";
-
-async function getImpelemntingPartnerOptionsFromServer(headers, serverUrl) {
+async function getOptionsByOptionSetId(headers, serverUrl, optionSetId) {
   const options = [];
   try {
     await logsHelper.addLogs(
       "info",
-      `Discovering options for :: ${implementingPartnerOptionSetId}`,
-      "getImpelemntingPartnerOptionsFromServer"
+      `Discovering options for :: ${optionSetId}`,
+      "getOptionsByOptionSetId"
     );
-    const url = `${serverUrl}/api/optionSets/${implementingPartnerOptionSetId}.json?fields=options[code,id]`;
+    const url = `${serverUrl}/api/optionSets/${optionSetId}.json?fields=options[code,id]`;
     const response = await httpHelper.getHttp(headers, url);
     options.push(response.options || []);
   } catch (error) {
     await logsHelper.addLogs(
       "error",
       error.message || error,
-      "getImpelemntingPartnerOptionsFromServer"
+      "getSubImpelemntingPartnerOptionsFromServer"
     );
   }
   return flattenDeep(options);
 }
 
 module.exports = {
-  getImpelemntingPartnerOptionsFromServer,
+  getOptionsByOptionSetId,
 };
