@@ -43,31 +43,31 @@ async function startAppProcess() {
       implementingPartnerOptions,
       subImplementingPartnerOptions
     );
-    // for (const program of programs) {
-    //   const events = await dhis2EventHelper.getEventsFromServer(
-    //     headers,
-    //     serverUrl,
-    //     implementingPartnerReferrence,
-    //     subImplementingPartnerReferrence,
-    //     users,
-    //     program
-    //   );
-    //   if (events.length > 0) {
-    //     writeToFile("output", program.name, events);
-    //     const response = await dhis2EventHelper.uploadEventsToTheServer(
-    //       headers,
-    //       serverUrl,
-    //       events,
-    //       program.name
-    //     );
-    //     const date = dhis2UtilHelper.getFormattedDate(new Date());
-    //     writeToFile(
-    //       "response",
-    //       `[${program.name}] server response ${date}`,
-    //       response
-    //     );
-    //   }
-    // }
+    for (const program of programs) {
+      const events = await dhis2EventHelper.getEventsFromServer(
+        headers,
+        serverUrl,
+        implementingPartnerReferrence,
+        subImplementingPartnerReferrence,
+        users,
+        program
+      );
+      if (events.length > 0) {
+        writeToFile("output", program.name, events);
+        const response = await dhis2EventHelper.uploadEventsToTheServer(
+          headers,
+          serverUrl,
+          events,
+          program.name
+        );
+        const date = dhis2UtilHelper.getFormattedDate(new Date());
+        writeToFile(
+          "response",
+          `[${program.name}] server response ${date}`,
+          response
+        );
+      }
+    }
   } catch (error) {
     await logsHelper.addLogs(
       "error",

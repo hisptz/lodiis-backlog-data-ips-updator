@@ -47,7 +47,6 @@ async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
   return flattenDeep(serverResponse);
 }
 
-//@TODO sub implementing partners
 async function getEventsFromServer(
   headers,
   serverUrl,
@@ -86,6 +85,7 @@ async function getEventsFromServer(
       const events = getSanitizedEvents(
         response.events || [],
         implementingPartnerReferrence,
+        subImplementingPartnerReferrence,
         users
       );
       sanitizedEvents.push(events);
@@ -102,59 +102,110 @@ async function getEventsFromServer(
   );
 }
 
-function getSanitizedEvents(events, implementingPartnerReferrence, users) {
-  return map(events, (eventObj) => {
-    const createdByUserInfo = eventObj.createdByUserInfo || {};
-    let dataValues = eventObj.dataValues || [];
-    if (
-      createdByUserInfo.uid ||
-      createdByUserInfo.username ||
-      eventObj.storedBy
-    ) {
-      const user =
-        createdByUserInfo.uid || createdByUserInfo.username
-          ? find(
-              users,
-              (userObj) =>
-                (userObj.id &&
-                  createdByUserInfo.uid &&
-                  userObj.id == createdByUserInfo.uid) ||
-                (userObj.username &&
-                  createdByUserInfo.username &&
-                  userObj.username == createdByUserInfo.username)
-            )
-          : find(
-              users,
-              (userObj) =>
-                userObj.username &&
-                eventObj.storedBy &&
-                userObj.username == eventObj.storedBy
-            );
-      if (user && user.implementingPartner) {
-        //@TODO handling implementing and sub implementing partner
-        const implementingPartnerDataValue = find(
-          eventObj.dataValues || [],
-          (dataValue) =>
-            dataValue && dataValue.dataElement === implementingPartnerReferrence
-        );
-        dataValues = implementingPartnerDataValue
-          ? []
-          : concat(
-              filter(
-                eventObj.dataValues || [],
-                (dataValue) =>
-                  dataValue &&
-                  dataValue.dataElement !== implementingPartnerReferrence
-              ),
-              {
-                dataElement: implementingPartnerReferrence,
-                value: user.implementingPartner,
-              }
-            );
+function getSanitizedEvents(
+  events,
+  implementingPartnerReferrence,
+  subImplementingPartnerReferrence,
+  users
+) {
+  return flattenDeep(
+    map(events, (eventObj) => {
+      const createdByUserInfo = eventObj.createdByUserInfo || {};
+      let dataValues = eventObj.dataValues || [];
+      if (
+        createdByUserInfo.uid ||
+        createdByUserInfo.username ||
+        eventObj.storedBy
+      ) {
+        const user =
+          createdByUserInfo.uid || createdByUserInfo.username
+            ? find(
+                users,
+                (userObj) =>
+                  (userObj.id &&
+                    createdByUserInfo.uid &&
+                    userObj.id == createdByUserInfo.uid) ||
+                  (userObj.username &&
+                    createdByUserInfo.username &&
+                    userObj.username == createdByUserInfo.username)
+              )
+            : find(
+                users,
+                (userObj) =>
+                  userObj.username &&
+                  eventObj.storedBy &&
+                  userObj.username == eventObj.storedBy
+              );
+        if (
+          user &&
+          user.implementingPartner
+        ) {
+          const implementingPartnerDataValue = find(
+            eventObj.dataValues || [],
+            (dataValue) =>
+              dataValue &&
+              dataValue.value !== "" &&
+              dataValue.dataElement === implementingPartnerReferrence
+          );
+          const subImplementingPartnerDataValue = find(
+            eventObj.dataValues || [],
+            (dataValue) =>
+              dataValue &&
+              dataValue.value !== "" &&
+              dataValue.dataElement === implementingPartnerReferrence
+          );
+
+          dataValues =
+            implementingPartnerDataValue && subImplementingPartnerDataValue
+              ? []
+              : !implementingPartnerDataValue && subImplementingPartnerDataValue
+              ? concat(
+                  filter(
+                    eventObj.dataValues || [],
+                    (dataValue) =>
+                      dataValue &&
+                      dataValue.dataElement !== implementingPartnerReferrence
+                  ),
+                  {
+                    dataElement: implementingPartnerReferrence,
+                    value: user.implementingPartner,
+                  }
+                )
+              : implementingPartnerDataValue && !subImplementingPartnerDataValue
+              ? (dataValues = concat(
+                  filter(
+                    eventObj.dataValues || [],
+                    (dataValue) =>
+                      dataValue &&
+                      dataValue.dataElement !== subImplementingPartnerReferrence
+                  ),
+                  {
+                    dataElement: subImplementingPartnerReferrence,
+                    value: user.subImplementingPartner,
+                  }
+                ))
+              : concat(
+                  filter(
+                    eventObj.dataValues || [],
+                    (dataValue) =>
+                      dataValue &&
+                      dataValue.dataElement !== implementingPartnerReferrence &&
+                      dataValue.dataElement !== subImplementingPartnerReferrence
+                  ),
+                  {
+                    dataElement: subImplementingPartnerReferrence,
+                    value: user.subImplementingPartner,
+                  },
+                  {
+                    dataElement: implementingPartnerReferrence,
+                    value: user.implementingPartner,
+                  }
+                );
+        }
       }
-    }
-    return dataValues.length > 0 ? { ...eventObj, dataValues } : [];
-  });
+      return dataValues.length > 0 ? { ...eventObj, dataValues } : [];
+    })
+  );
 }
 
 module.exports = { getEventsFromServer, uploadEventsToTheServer };
