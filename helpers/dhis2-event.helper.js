@@ -136,10 +136,7 @@ function getSanitizedEvents(
                   eventObj.storedBy &&
                   userObj.username == eventObj.storedBy
               );
-        if (
-          user &&
-          user.implementingPartner
-        ) {
+        if (user && user.implementingPartner) {
           const implementingPartnerDataValue = find(
             eventObj.dataValues || [],
             (dataValue) =>
