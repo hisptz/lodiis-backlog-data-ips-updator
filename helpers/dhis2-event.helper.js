@@ -136,10 +136,7 @@ function getSanitizedEvents(
                   eventObj.storedBy &&
                   userObj.username == eventObj.storedBy
               );
-        if (
-          user &&
-          user.implementingPartner
-        ) {
+        if (user && user.implementingPartner) {
           const implementingPartnerDataValue = find(
             eventObj.dataValues || [],
             (dataValue) =>
@@ -154,7 +151,6 @@ function getSanitizedEvents(
               dataValue.value !== "" &&
               dataValue.dataElement === implementingPartnerReferrence
           );
-
           dataValues =
             implementingPartnerDataValue && subImplementingPartnerDataValue
               ? []
@@ -172,7 +168,7 @@ function getSanitizedEvents(
                   }
                 )
               : implementingPartnerDataValue && !subImplementingPartnerDataValue
-              ? (dataValues = concat(
+              ? concat(
                   filter(
                     eventObj.dataValues || [],
                     (dataValue) =>
@@ -183,7 +179,7 @@ function getSanitizedEvents(
                     dataElement: subImplementingPartnerReferrence,
                     value: user.subImplementingPartner,
                   }
-                ))
+                )
               : concat(
                   filter(
                     eventObj.dataValues || [],
