@@ -1,7 +1,9 @@
 const {
   sourceConfig,
-  implementingPartnerReferrence,
-  subImplementingPartnerReferrence,
+  implementingPartnerDataElementReferrence,
+  subImplementingPartnerDataElementReferrence,
+  implementingPartnerAttributeReferrence,
+  subImplementingPartnerAttributeReferrence,
 } = require("../configs");
 
 const dhis2ProgramHelper = require("../helpers/dhis2-program.helper");
@@ -10,6 +12,7 @@ const dhis2UserHelper = require("../helpers/dhis2-user.helper");
 const dhis2EventHelper = require("../helpers/dhis2-event.helper");
 const dhis2UtilHelper = require("../helpers/dhis2-util.helper");
 const logsHelper = require("../helpers/logs.helper");
+const dhis2TrackerDataHelper = require("../helpers/dhis2-tracker-data.helper");
 const { writeToFile } = require("../helpers/file-manipulation.helper");
 
 async function startAppProcess() {
@@ -44,11 +47,37 @@ async function startAppProcess() {
       subImplementingPartnerOptions
     );
     for (const program of programs) {
+      if (program.isTrackerBased) {
+        const trakerData =
+          await dhis2TrackerDataHelper.getTrackerDataFromServer(
+            headers,
+            serverUrl,
+            implementingPartnerAttributeReferrence,
+            subImplementingPartnerAttributeReferrence,
+            users,
+            program
+          );
+        if (trakerData.length > 0) {
+          const response =
+            await dhis2TrackerDataHelper.uploadTrackerDataToTheServer(
+              headers,
+              serverUrl,
+              trakerData,
+              program.name
+            );
+          const date = dhis2UtilHelper.getFormattedDate(new Date());
+          writeToFile(
+            "response",
+            `[${program.name}] tracker server response ${date}`,
+            response
+          );
+        }
+      }
       const events = await dhis2EventHelper.getEventsFromServer(
         headers,
         serverUrl,
-        implementingPartnerReferrence,
-        subImplementingPartnerReferrence,
+        implementingPartnerDataElementReferrence,
+        subImplementingPartnerDataElementReferrence,
         users,
         program
       );
