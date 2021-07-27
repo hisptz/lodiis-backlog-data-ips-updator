@@ -82,13 +82,15 @@ async function getEventsFromServer(
       );
       const url = `${eventUrl}?program=${programId}&${fields}&${paginationFilter}&order=created:DESC`;
       const response = await httpHelper.getHttp(headers, url);
-      const events = getSanitizedEvents(
-        response.events || [],
-        implementingPartnerReferrence,
-        subImplementingPartnerReferrence,
-        users
-      );
-      sanitizedEvents.push(events);
+      if (response && response.events) {
+        const events = getSanitizedEvents(
+          response.events || [],
+          implementingPartnerReferrence,
+          subImplementingPartnerReferrence,
+          users
+        );
+        sanitizedEvents.push(events);
+      }
     }
   } catch (error) {
     await logsHelper.addLogs(

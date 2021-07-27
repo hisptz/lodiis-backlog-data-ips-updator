@@ -29,10 +29,12 @@ async function getDhis2ResourcePaginationFromServer(
         ? `${resourceUrl}?fields=none&pageSize=1${filters}`
         : `${resourceUrl}?fields=none&pageSize=1`;
     const response = await httpHelper.getHttp(headers, url);
-    const pager = response.pager || {};
-    const total = pager.total || pageSize;
-    for (let page = 1; page <= Math.ceil(total / pageSize); page++) {
-      paginationFilters.push(`pageSize=${pageSize}&page=${page}`);
+    if (response && response.pager) {
+      const pager = response.pager || {};
+      const total = pager.total || pageSize;
+      for (let page = 1; page <= Math.ceil(total / pageSize); page++) {
+        paginationFilters.push(`pageSize=${pageSize}&page=${page}`);
+      }
     }
   } catch (error) {
     await logsHelper.addLogs(

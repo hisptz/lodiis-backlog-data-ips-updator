@@ -68,7 +68,7 @@ async function getTrackerDataFromServer(
     await logsHelper.addLogs(
       "info",
       `Discovering tracker data's paginations for program :: ${programName}`,
-      "getEventsFromServer"
+      "getTrackerDataFromServer"
     );
     const paginationFilters =
       await dhis2UtilHelper.getDhis2ResourcePaginationFromServer(
@@ -83,19 +83,21 @@ async function getTrackerDataFromServer(
       await logsHelper.addLogs(
         "info",
         `Discovering tracker data for program :: ${programName} :: ${count} of ${paginationFilters.length}`,
-        "getEventsFromServer"
+        "getTrackerDataFromServer"
       );
       const url = `${trackerUrl}?ouMode=ALL&program=${programId}&${fields}&${paginationFilter}&order=created:DESC`;
       const response = await httpHelper.getHttp(headers, url);
-      sanitizedTrackerData.push(
-        getSanitizedTrackerData(
-          response.trackedEntityInstances || [],
-          programId,
-          implementingPartnerReferrence,
-          subImplementingPartnerReferrence,
-          users
-        )
-      );
+      if (response && response.trackedEntityInstances) {
+        sanitizedTrackerData.push(
+          getSanitizedTrackerData(
+            response.trackedEntityInstances || [],
+            programId,
+            implementingPartnerReferrence,
+            subImplementingPartnerReferrence,
+            users
+          )
+        );
+      }
     }
   } catch (error) {
     await logsHelper.addLogs(
