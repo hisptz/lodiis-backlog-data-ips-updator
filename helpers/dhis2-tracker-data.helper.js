@@ -9,6 +9,7 @@ const {
 } = require("lodash");
 
 const dhis2UtilHelper = require("./dhis2-util.helper");
+const { writeToFile } = require("./file-manipulation.helper");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
@@ -52,13 +53,14 @@ async function uploadTrackerDataToTheServer(
   return flattenDeep(serverResponse);
 }
 
-async function getTrackerDataFromServer(
+async function getAndUploadTrackerDataFromServer(
   headers,
   serverUrl,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
   users,
-  program
+  program,
+  tieResponse
 ) {
   const sanitizedTrackerData = [];
   const fields = `fields=created,trackedEntityInstance,trackedEntityType,orgUnit,attributes[attribute,value],enrollments[storedBy,createdByUserInfo[uid,username],program,orgUnit,status,trackedEntityInstance,enrollment,trackedEntityType,incidentDate,enrollmentDate]`;
@@ -68,7 +70,7 @@ async function getTrackerDataFromServer(
     await logsHelper.addLogs(
       "info",
       `Discovering tracker data's paginations for program :: ${programName}`,
-      "getTrackerDataFromServer"
+      "getAndUploadTrackerDataFromServer"
     );
     const paginationFilters =
       await dhis2UtilHelper.getDhis2ResourcePaginationFromServer(
@@ -83,32 +85,47 @@ async function getTrackerDataFromServer(
       await logsHelper.addLogs(
         "info",
         `Discovering tracker data for program :: ${programName} :: ${count} of ${paginationFilters.length}`,
-        "getTrackerDataFromServer"
+        "getAndUploadTrackerDataFromServer"
       );
       const url = `${trackerUrl}?ouMode=ALL&program=${programId}&${fields}&${paginationFilter}&order=created:DESC`;
       const response = await httpHelper.getHttp(headers, url);
       if (response && response.trackedEntityInstances) {
-        sanitizedTrackerData.push(
-          getSanitizedTrackerData(
-            response.trackedEntityInstances || [],
-            programId,
-            implementingPartnerReferrence,
-            subImplementingPartnerReferrence,
-            users
-          )
+        const teiData = getSanitizedTrackerData(
+          response.trackedEntityInstances || [],
+          programId,
+          implementingPartnerReferrence,
+          subImplementingPartnerReferrence,
+          users
         );
+        const data = map(flattenDeep(teiData), (trackerData) =>
+          omit(trackerData, ["enrollments"])
+        );
+        if (data.length > 0) {
+          sanitizedTrackerData.push(data);
+          writeToFile("output", programName, sanitizedTrackerData);
+          const response = await uploadTrackerDataToTheServer(
+            headers,
+            serverUrl,
+            data,
+            programName
+          );
+          tieResponse.push(response);
+          const date = dhis2UtilHelper.getFormattedDate(new Date());
+          writeToFile(
+            "response",
+            `[${programName}] tracker server response ${date}`,
+            flattenDeep(tieResponse)
+          );
+        }
       }
     }
   } catch (error) {
     await logsHelper.addLogs(
       "error",
       error.message || error,
-      "getTrackerDataFromServer"
+      "getAndUploadTrackerDataFromServer"
     );
   }
-  return map(flattenDeep(sanitizedTrackerData), (trackerData) =>
-    omit(trackerData, ["enrollments"])
-  );
 }
 
 function getSanitizedTrackerData(
@@ -240,6 +257,6 @@ function getSanitizedTrackerData(
 }
 
 module.exports = {
-  getTrackerDataFromServer,
+  getAndUploadTrackerDataFromServer,
   uploadTrackerDataToTheServer,
 };

@@ -47,55 +47,28 @@ async function startAppProcess() {
       subImplementingPartnerOptions
     );
     for (const program of programs) {
+      const tieResponse = [];
+      const eventResponse = [];
       if (program.isTrackerBased) {
-        const trakerData =
-          await dhis2TrackerDataHelper.getTrackerDataFromServer(
-            headers,
-            serverUrl,
-            implementingPartnerAttributeReferrence,
-            subImplementingPartnerAttributeReferrence,
-            users,
-            program
-          );
-        if (trakerData.length > 0) {
-          const response =
-            await dhis2TrackerDataHelper.uploadTrackerDataToTheServer(
-              headers,
-              serverUrl,
-              trakerData,
-              program.name
-            );
-          const date = dhis2UtilHelper.getFormattedDate(new Date());
-          writeToFile(
-            "response",
-            `[${program.name}] tracker server response ${date}`,
-            response
-          );
-        }
+        await dhis2TrackerDataHelper.getAndUploadTrackerDataFromServer(
+          headers,
+          serverUrl,
+          implementingPartnerAttributeReferrence,
+          subImplementingPartnerAttributeReferrence,
+          users,
+          program,
+          tieResponse
+        );
       }
-      const events = await dhis2EventHelper.getEventsFromServer(
+      await dhis2EventHelper.getAndUploadEventsFromServer(
         headers,
         serverUrl,
         implementingPartnerDataElementReferrence,
         subImplementingPartnerDataElementReferrence,
         users,
-        program
+        program,
+        eventResponse
       );
-      if (events.length > 0) {
-        writeToFile("output", program.name, events);
-        const response = await dhis2EventHelper.uploadEventsToTheServer(
-          headers,
-          serverUrl,
-          events,
-          program.name
-        );
-        const date = dhis2UtilHelper.getFormattedDate(new Date());
-        writeToFile(
-          "response",
-          `[${program.name}] server response ${date}`,
-          response
-        );
-      }
     }
   } catch (error) {
     await logsHelper.addLogs(
