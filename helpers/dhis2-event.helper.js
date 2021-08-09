@@ -9,6 +9,7 @@ const {
 } = require("lodash");
 
 const dhis2UtilHelper = require("./dhis2-util.helper");
+const { writeToFile } = require("./file-manipulation.helper");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
@@ -47,13 +48,14 @@ async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
   return flattenDeep(serverResponse);
 }
 
-async function getEventsFromServer(
+async function getAndUploadEventsFromServer(
   headers,
   serverUrl,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
   users,
-  program
+  program,
+  eventResponse
 ) {
   const sanitizedEvents = [];
   try {
@@ -63,7 +65,7 @@ async function getEventsFromServer(
     await logsHelper.addLogs(
       "info",
       `Discovering event's paginations for program :: ${programName}`,
-      "getEventsFromServer"
+      "getAndUploadEventsFromServer"
     );
     const paginationFilters =
       await dhis2UtilHelper.getDhis2ResourcePaginationFromServer(
@@ -78,7 +80,7 @@ async function getEventsFromServer(
       await logsHelper.addLogs(
         "info",
         `Discovering events for program :: ${programName} :: ${count} of ${paginationFilters.length}`,
-        "getEventsFromServer"
+        "getAndUploadEventsFromServer"
       );
       const url = `${eventUrl}?program=${programId}&${fields}&${paginationFilter}&order=created:DESC`;
       const response = await httpHelper.getHttp(headers, url);
@@ -89,19 +91,35 @@ async function getEventsFromServer(
           subImplementingPartnerReferrence,
           users
         );
-        sanitizedEvents.push(events);
+        const data = map(flattenDeep(events), (event) =>
+          omit(event, ["createdByUserInfo", "storedBy"])
+        );
+        if (data.length > 0) {
+          sanitizedEvents.push(data);
+          writeToFile("output", programName, sanitizedEvents);
+          const response = await uploadEventsToTheServer(
+            headers,
+            serverUrl,
+            data,
+            programName
+          );
+          const date = dhis2UtilHelper.getFormattedDate(new Date());
+          eventResponse.push(response);
+          writeToFile(
+            "response",
+            `[${programName}] server response ${date}`,
+            flattenDeep(eventResponse)
+          );
+        }
       }
     }
   } catch (error) {
     await logsHelper.addLogs(
       "error",
       error.message || error,
-      "getEventsFromServer"
+      "getAndUploadEventsFromServer"
     );
   }
-  return map(flattenDeep(sanitizedEvents), (event) =>
-    omit(event, ["createdByUserInfo", "storedBy"])
-  );
 }
 
 function getSanitizedEvents(
@@ -206,4 +224,4 @@ function getSanitizedEvents(
   );
 }
 
-module.exports = { getEventsFromServer, uploadEventsToTheServer };
+module.exports = { getAndUploadEventsFromServer, uploadEventsToTheServer };
