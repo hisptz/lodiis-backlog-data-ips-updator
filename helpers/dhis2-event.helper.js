@@ -156,6 +156,7 @@ function getSanitizedEvents(
                   eventObj.storedBy &&
                   userObj.username == eventObj.storedBy
               );
+        // @TODO checking for user info and assign user as provider
         if (user && user.implementingPartner) {
           const implementingPartnerDataValue = find(
             eventObj.dataValues || [],

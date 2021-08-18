@@ -172,6 +172,7 @@ function getSanitizedTrackerData(
                       enrollment.storedBy &&
                       userObj.username == enrollment.storedBy
                   );
+                   // @TODO checking for user info and assign user as provider
             if (user && user.implementingPartner) {
               const implementingPartnerAttribute = find(
                 trackerObject.attributes || [],
