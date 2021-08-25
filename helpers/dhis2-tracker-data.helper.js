@@ -58,6 +58,7 @@ async function getAndUploadTrackerDataFromServer(
   serverUrl,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users,
   program,
   tieResponse
@@ -95,6 +96,7 @@ async function getAndUploadTrackerDataFromServer(
           programId,
           implementingPartnerReferrence,
           subImplementingPartnerReferrence,
+          serviceProviderReference,
           users
         );
         const data = map(flattenDeep(teiData), (trackerData) =>
@@ -133,6 +135,7 @@ function getSanitizedTrackerData(
   programId,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users
 ) {
   return filter(
@@ -172,7 +175,6 @@ function getSanitizedTrackerData(
                       enrollment.storedBy &&
                       userObj.username == enrollment.storedBy
                   );
-                   // @TODO checking for user info and assign user as provider
             if (user && user.implementingPartner) {
               const implementingPartnerAttribute = find(
                 trackerObject.attributes || [],
@@ -181,13 +183,21 @@ function getSanitizedTrackerData(
                   attributeObj.value !== "" &&
                   attributeObj.attribute === implementingPartnerReferrence
               );
+              const serviveProviderAttribute = find(
+                trackerObject.attributes || [],
+                (attributeObj) =>
+                  attributeObj &&
+                  attributeObj.value !== "" &&
+                  attributeObj.attribute === serviceProviderReference
+              );
               const subImplementingPartnerAttribute = find(
                 trackerObject.attributes || [],
                 (attributeObj) =>
                   attributeObj &&
                   attributeObj.value !== "" &&
-                  attributeObj.attribute === implementingPartnerReferrence
+                  attributeObj.attribute === subImplementingPartnerReferrence
               );
+              // @TODO proper assignment name of service provider
               sanitizedTrackerData.push({
                 ...trackerObject,
                 attributes:

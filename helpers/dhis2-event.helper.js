@@ -13,14 +13,16 @@ const { writeToFile } = require("./file-manipulation.helper");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
+const donwloadPageSize = 200;
+const uploadPageSize = 200;
+
 async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
   let count = 0;
   const serverResponse = [];
-  const batchSize = 200;
   try {
     const url = `${serverUrl}/api/events?strategy=CREATE_AND_UPDATE`;
-    const total = chunk(data, batchSize).length;
-    for (const events of chunk(data, batchSize)) {
+    const total = chunk(data, uploadPageSize).length;
+    for (const events of chunk(data, batchuploadPageSizeSize)) {
       count++;
       await logsHelper.addLogs(
         "info",
@@ -53,6 +55,7 @@ async function getAndUploadEventsFromServer(
   serverUrl,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users,
   program,
   eventResponse
@@ -71,7 +74,7 @@ async function getAndUploadEventsFromServer(
       await dhis2UtilHelper.getDhis2ResourcePaginationFromServer(
         headers,
         eventUrl,
-        500,
+        donwloadPageSize,
         `&program=${programId}&totalPages=true`
       );
     let count = 0;
@@ -89,6 +92,7 @@ async function getAndUploadEventsFromServer(
           response.events || [],
           implementingPartnerReferrence,
           subImplementingPartnerReferrence,
+          serviceProviderReference,
           users
         );
         const data = map(flattenDeep(events), (event) =>
@@ -126,6 +130,7 @@ function getSanitizedEvents(
   events,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users
 ) {
   return flattenDeep(
@@ -156,7 +161,6 @@ function getSanitizedEvents(
                   eventObj.storedBy &&
                   userObj.username == eventObj.storedBy
               );
-        // @TODO checking for user info and assign user as provider
         if (user && user.implementingPartner) {
           const implementingPartnerDataValue = find(
             eventObj.dataValues || [],
@@ -170,8 +174,16 @@ function getSanitizedEvents(
             (dataValue) =>
               dataValue &&
               dataValue.value !== "" &&
-              dataValue.dataElement === implementingPartnerReferrence
+              dataValue.dataElement === subImplementingPartnerReferrence
           );
+          const serviveProviderDataValue = find(
+            trackerObject.attributes || [],
+            (attributeObj) =>
+              attributeObj &&
+              attributeObj.value !== "" &&
+              attributeObj.attribute === serviceProviderReference
+          );
+          // @TODO proper assignment of name of provider
           dataValues =
             implementingPartnerDataValue && subImplementingPartnerDataValue
               ? []
