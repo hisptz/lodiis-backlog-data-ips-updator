@@ -22,7 +22,7 @@ async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
   try {
     const url = `${serverUrl}/api/events?strategy=CREATE_AND_UPDATE`;
     const total = chunk(data, uploadPageSize).length;
-    for (const events of chunk(data, batchuploadPageSizeSize)) {
+    for (const events of chunk(data, uploadPageSize)) {
       count++;
       await logsHelper.addLogs(
         "info",
@@ -62,7 +62,7 @@ async function getAndUploadEventsFromServer(
 ) {
   const sanitizedEvents = [];
   try {
-    const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[*]`;
+    const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[value,dataElement]`;
     const { id: programId, name: programName } = program;
     const eventUrl = `${serverUrl}/api/events.json`;
     await logsHelper.addLogs(
@@ -98,25 +98,23 @@ async function getAndUploadEventsFromServer(
         const data = map(flattenDeep(events), (event) =>
           omit(event, ["createdByUserInfo", "storedBy"])
         );
-        console.log("\n\n");
-        console.log(data);
-        // if (data.length > 0) {
-        //   sanitizedEvents.push(data);
-        //   writeToFile("output", programName, sanitizedEvents);
-        //   const response = await uploadEventsToTheServer(
-        //     headers,
-        //     serverUrl,
-        //     data,
-        //     programName
-        //   );
-        //   const date = dhis2UtilHelper.getFormattedDate(new Date());
-        //   eventResponse.push(response);
-        //   writeToFile(
-        //     "response",
-        //     `[${programName}] server response ${date}`,
-        //     flattenDeep(eventResponse)
-        //   );
-        // }
+        if (data.length > 0) {
+          sanitizedEvents.push(data);
+          writeToFile("output", programName, sanitizedEvents);
+          const response = await uploadEventsToTheServer(
+            headers,
+            serverUrl,
+            data,
+            programName
+          );
+          const date = dhis2UtilHelper.getFormattedDate(new Date());
+          eventResponse.push(response);
+          writeToFile(
+            "response",
+            `[${programName}] server response ${date}`,
+            flattenDeep(eventResponse)
+          );
+        }
       }
     }
   } catch (error) {
@@ -179,64 +177,115 @@ function getSanitizedEvents(
               dataValue.dataElement === subImplementingPartnerReferrence
           );
           const serviveProviderDataValue = find(
-            trackerObject.attributes || [],
-            (attributeObj) =>
-              attributeObj &&
-              attributeObj.value !== "" &&
-              attributeObj.attribute === serviceProviderReference
+            eventObj.dataValues || [],
+            (dataValue) =>
+              dataValue &&
+              dataValue.value !== "" &&
+              dataValue.dataElement === serviceProviderReference
           );
-          // @TODO proper assignment of name of provider
+          dataValues = getEventDataValues(
+            serviveProviderDataValue,
+            implementingPartnerDataValue,
+            subImplementingPartnerDataValue,
+            eventObj,
+            user,
+            serviceProviderReference,
+            implementingPartnerReferrence,
+            subImplementingPartnerReferrence
+          );
           dataValues =
-            implementingPartnerDataValue && subImplementingPartnerDataValue
-              ? []
-              : !implementingPartnerDataValue && subImplementingPartnerDataValue
+            dataValues.length > 0
               ? concat(
                   filter(
-                    eventObj.dataValues || [],
+                    dataValues,
                     (dataValue) =>
                       dataValue &&
-                      dataValue.dataElement !== implementingPartnerReferrence
+                      dataValue.dataElement !== serviceProviderReference
                   ),
                   {
-                    dataElement: implementingPartnerReferrence,
-                    value: user.implementingPartner,
+                    dataElement: serviceProviderReference,
+                    value: user.username || "",
                   }
                 )
-              : implementingPartnerDataValue && !subImplementingPartnerDataValue
-              ? concat(
-                  filter(
-                    eventObj.dataValues || [],
-                    (dataValue) =>
-                      dataValue &&
-                      dataValue.dataElement !== subImplementingPartnerReferrence
-                  ),
-                  {
-                    dataElement: subImplementingPartnerReferrence,
-                    value: user.subImplementingPartner,
-                  }
-                )
-              : concat(
-                  filter(
-                    eventObj.dataValues || [],
-                    (dataValue) =>
-                      dataValue &&
-                      dataValue.dataElement !== implementingPartnerReferrence &&
-                      dataValue.dataElement !== subImplementingPartnerReferrence
-                  ),
-                  {
-                    dataElement: subImplementingPartnerReferrence,
-                    value: user.subImplementingPartner,
-                  },
-                  {
-                    dataElement: implementingPartnerReferrence,
-                    value: user.implementingPartner,
-                  }
-                );
+              : [];
         }
       }
-      return dataValues.length > 0 ? { ...eventObj, dataValues } : [];
+      return dataValues.length > 0
+        ? {
+            ...eventObj,
+            dataValues,
+          }
+        : [];
     })
   );
 }
 
-module.exports = { getAndUploadEventsFromServer, uploadEventsToTheServer };
+function getEventDataValues(
+  serviveProviderDataValue,
+  implementingPartnerDataValue,
+  subImplementingPartnerDataValue,
+  eventObj,
+  user,
+  serviceProviderReference,
+  implementingPartnerReferrence,
+  subImplementingPartnerReferrence
+) {
+  return implementingPartnerDataValue && subImplementingPartnerDataValue
+    ? !serviveProviderDataValue
+      ? concat(
+          filter(
+            eventObj.dataValues || [],
+            (dataValue) =>
+              dataValue && dataValue.dataElement !== serviceProviderReference
+          ),
+          {
+            dataElement: serviceProviderReference,
+            value: user.username || "",
+          }
+        )
+      : []
+    : !implementingPartnerDataValue && subImplementingPartnerDataValue
+    ? concat(
+        filter(
+          eventObj.dataValues || [],
+          (dataValue) =>
+            dataValue && dataValue.dataElement !== implementingPartnerReferrence
+        ),
+        {
+          dataElement: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      )
+    : implementingPartnerDataValue && !subImplementingPartnerDataValue
+    ? concat(
+        filter(
+          eventObj.dataValues || [],
+          (dataValue) =>
+            dataValue &&
+            dataValue.dataElement !== subImplementingPartnerReferrence
+        ),
+        {
+          dataElement: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        }
+      )
+    : concat(
+        filter(
+          eventObj.dataValues || [],
+          (dataValue) =>
+            dataValue &&
+            dataValue.dataElement !== implementingPartnerReferrence &&
+            dataValue.dataElement !== subImplementingPartnerReferrence
+        ),
+        {
+          dataElement: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        },
+        {
+          dataElement: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      );
+}
+
+module.exports = { getAndUploadEventsFromServer };

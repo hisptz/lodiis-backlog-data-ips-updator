@@ -32,7 +32,7 @@ async function uploadTrackerDataToTheServer(
       await logsHelper.addLogs(
         "info",
         `Uploading tracker data for :: ${programName} ::: ${count} of ${total}`,
-        `uploadEventsToTheServer`
+        `uploadTrackerDataToTheServer`
       );
       try {
         const response = await httpHelper.postHttp(headers, url, {
@@ -209,18 +209,21 @@ function getSanitizedTrackerData(
               );
               sanitizedTrackerData.push({
                 ...trackerObject,
-                attributes: attributes.length > 0 ? concat(
-                  filter(
-                    attributes || [],
-                    (attributeObj) =>
-                      attributeObj &&
-                      attributeObj.attribute !== serviceProviderReference
-                  ),
-                  {
-                    attribute: serviceProviderReference,
-                    value: user.username || "",
-                  }
-                ) : [],
+                attributes:
+                  attributes.length > 0
+                    ? concat(
+                        filter(
+                          attributes || [],
+                          (attributeObj) =>
+                            attributeObj &&
+                            attributeObj.attribute !== serviceProviderReference
+                        ),
+                        {
+                          attribute: serviceProviderReference,
+                          value: user.username || "",
+                        }
+                      )
+                    : [],
               });
             }
           }
@@ -235,10 +238,6 @@ function getSanitizedTrackerData(
   );
 }
 
-module.exports = {
-  getAndUploadTrackerDataFromServer,
-  uploadTrackerDataToTheServer,
-};
 function getSanitizedAttribute(
   serviveProviderAttribute,
   implementingPartnerAttribute,
@@ -308,3 +307,7 @@ function getSanitizedAttribute(
         }
       );
 }
+
+module.exports = {
+  getAndUploadTrackerDataFromServer,
+};
