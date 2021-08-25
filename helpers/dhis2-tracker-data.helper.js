@@ -185,7 +185,7 @@ function getSanitizedTrackerData(
                 (attributeObj) =>
                   attributeObj &&
                   attributeObj.value !== "" &&
-                  attributeObj.attribute === implementingPartnerReferrence
+                  attributeObj.attribute === subImplementingPartnerReferrence
               );
               sanitizedTrackerData.push({
                 ...trackerObject,

@@ -169,7 +169,7 @@ function getSanitizedEvents(
             (dataValue) =>
               dataValue &&
               dataValue.value !== "" &&
-              dataValue.dataElement === implementingPartnerReferrence
+              dataValue.dataElement === subImplementingPartnerReferrence
           );
           dataValues =
             implementingPartnerDataValue && subImplementingPartnerDataValue
