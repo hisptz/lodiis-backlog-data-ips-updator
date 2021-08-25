@@ -4,6 +4,8 @@ const {
   subImplementingPartnerDataElementReferrence,
   implementingPartnerAttributeReferrence,
   subImplementingPartnerAttributeReferrence,
+  serviceProviderAttributeReference,
+  serviceProviderDataElementReference,
 } = require("../configs");
 
 const dhis2ProgramHelper = require("../helpers/dhis2-program.helper");
@@ -55,6 +57,7 @@ async function startAppProcess() {
           serverUrl,
           implementingPartnerAttributeReferrence,
           subImplementingPartnerAttributeReferrence,
+          serviceProviderAttributeReference,
           users,
           program,
           tieResponse
@@ -65,6 +68,7 @@ async function startAppProcess() {
         serverUrl,
         implementingPartnerDataElementReferrence,
         subImplementingPartnerDataElementReferrence,
+        serviceProviderDataElementReference,
         users,
         program,
         eventResponse

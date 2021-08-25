@@ -13,14 +13,16 @@ const { writeToFile } = require("./file-manipulation.helper");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
+const donwloadPageSize = 200;
+const uploadPageSize = 200;
+
 async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
   let count = 0;
   const serverResponse = [];
-  const batchSize = 200;
   try {
     const url = `${serverUrl}/api/events?strategy=CREATE_AND_UPDATE`;
-    const total = chunk(data, batchSize).length;
-    for (const events of chunk(data, batchSize)) {
+    const total = chunk(data, uploadPageSize).length;
+    for (const events of chunk(data, uploadPageSize)) {
       count++;
       await logsHelper.addLogs(
         "info",
@@ -53,13 +55,14 @@ async function getAndUploadEventsFromServer(
   serverUrl,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users,
   program,
   eventResponse
 ) {
   const sanitizedEvents = [];
   try {
-    const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[*]`;
+    const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[value,dataElement]`;
     const { id: programId, name: programName } = program;
     const eventUrl = `${serverUrl}/api/events.json`;
     await logsHelper.addLogs(
@@ -71,7 +74,7 @@ async function getAndUploadEventsFromServer(
       await dhis2UtilHelper.getDhis2ResourcePaginationFromServer(
         headers,
         eventUrl,
-        500,
+        donwloadPageSize,
         `&program=${programId}&totalPages=true`
       );
     let count = 0;
@@ -89,6 +92,7 @@ async function getAndUploadEventsFromServer(
           response.events || [],
           implementingPartnerReferrence,
           subImplementingPartnerReferrence,
+          serviceProviderReference,
           users
         );
         const data = map(flattenDeep(events), (event) =>
@@ -126,6 +130,7 @@ function getSanitizedEvents(
   events,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users
 ) {
   return flattenDeep(
@@ -171,57 +176,116 @@ function getSanitizedEvents(
               dataValue.value !== "" &&
               dataValue.dataElement === subImplementingPartnerReferrence
           );
+          const serviveProviderDataValue = find(
+            eventObj.dataValues || [],
+            (dataValue) =>
+              dataValue &&
+              dataValue.value !== "" &&
+              dataValue.dataElement === serviceProviderReference
+          );
+          dataValues = getEventDataValues(
+            serviveProviderDataValue,
+            implementingPartnerDataValue,
+            subImplementingPartnerDataValue,
+            eventObj,
+            user,
+            serviceProviderReference,
+            implementingPartnerReferrence,
+            subImplementingPartnerReferrence
+          );
           dataValues =
-            implementingPartnerDataValue && subImplementingPartnerDataValue
-              ? []
-              : !implementingPartnerDataValue && subImplementingPartnerDataValue
+            dataValues.length > 0
               ? concat(
                   filter(
-                    eventObj.dataValues || [],
+                    dataValues,
                     (dataValue) =>
                       dataValue &&
-                      dataValue.dataElement !== implementingPartnerReferrence
+                      dataValue.dataElement !== serviceProviderReference
                   ),
                   {
-                    dataElement: implementingPartnerReferrence,
-                    value: user.implementingPartner,
+                    dataElement: serviceProviderReference,
+                    value: user.username || "",
                   }
                 )
-              : implementingPartnerDataValue && !subImplementingPartnerDataValue
-              ? concat(
-                  filter(
-                    eventObj.dataValues || [],
-                    (dataValue) =>
-                      dataValue &&
-                      dataValue.dataElement !== subImplementingPartnerReferrence
-                  ),
-                  {
-                    dataElement: subImplementingPartnerReferrence,
-                    value: user.subImplementingPartner,
-                  }
-                )
-              : concat(
-                  filter(
-                    eventObj.dataValues || [],
-                    (dataValue) =>
-                      dataValue &&
-                      dataValue.dataElement !== implementingPartnerReferrence &&
-                      dataValue.dataElement !== subImplementingPartnerReferrence
-                  ),
-                  {
-                    dataElement: subImplementingPartnerReferrence,
-                    value: user.subImplementingPartner,
-                  },
-                  {
-                    dataElement: implementingPartnerReferrence,
-                    value: user.implementingPartner,
-                  }
-                );
+              : [];
         }
       }
-      return dataValues.length > 0 ? { ...eventObj, dataValues } : [];
+      return dataValues.length > 0
+        ? {
+            ...eventObj,
+            dataValues,
+          }
+        : [];
     })
   );
 }
 
-module.exports = { getAndUploadEventsFromServer, uploadEventsToTheServer };
+function getEventDataValues(
+  serviveProviderDataValue,
+  implementingPartnerDataValue,
+  subImplementingPartnerDataValue,
+  eventObj,
+  user,
+  serviceProviderReference,
+  implementingPartnerReferrence,
+  subImplementingPartnerReferrence
+) {
+  return implementingPartnerDataValue && subImplementingPartnerDataValue
+    ? !serviveProviderDataValue
+      ? concat(
+          filter(
+            eventObj.dataValues || [],
+            (dataValue) =>
+              dataValue && dataValue.dataElement !== serviceProviderReference
+          ),
+          {
+            dataElement: serviceProviderReference,
+            value: user.username || "",
+          }
+        )
+      : []
+    : !implementingPartnerDataValue && subImplementingPartnerDataValue
+    ? concat(
+        filter(
+          eventObj.dataValues || [],
+          (dataValue) =>
+            dataValue && dataValue.dataElement !== implementingPartnerReferrence
+        ),
+        {
+          dataElement: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      )
+    : implementingPartnerDataValue && !subImplementingPartnerDataValue
+    ? concat(
+        filter(
+          eventObj.dataValues || [],
+          (dataValue) =>
+            dataValue &&
+            dataValue.dataElement !== subImplementingPartnerReferrence
+        ),
+        {
+          dataElement: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        }
+      )
+    : concat(
+        filter(
+          eventObj.dataValues || [],
+          (dataValue) =>
+            dataValue &&
+            dataValue.dataElement !== implementingPartnerReferrence &&
+            dataValue.dataElement !== subImplementingPartnerReferrence
+        ),
+        {
+          dataElement: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        },
+        {
+          dataElement: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      );
+}
+
+module.exports = { getAndUploadEventsFromServer };

@@ -18,7 +18,7 @@ async function getOptionsByOptionSetId(headers, serverUrl, optionSetId) {
     await logsHelper.addLogs(
       "error",
       error.message || error,
-      "getSubImpelemntingPartnerOptionsFromServer"
+      "getOptionsByOptionSetId"
     );
   }
   return flattenDeep(options);

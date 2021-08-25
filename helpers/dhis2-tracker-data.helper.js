@@ -32,7 +32,7 @@ async function uploadTrackerDataToTheServer(
       await logsHelper.addLogs(
         "info",
         `Uploading tracker data for :: ${programName} ::: ${count} of ${total}`,
-        `uploadEventsToTheServer`
+        `uploadTrackerDataToTheServer`
       );
       try {
         const response = await httpHelper.postHttp(headers, url, {
@@ -58,6 +58,7 @@ async function getAndUploadTrackerDataFromServer(
   serverUrl,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users,
   program,
   tieResponse
@@ -95,6 +96,7 @@ async function getAndUploadTrackerDataFromServer(
           programId,
           implementingPartnerReferrence,
           subImplementingPartnerReferrence,
+          serviceProviderReference,
           users
         );
         const data = map(flattenDeep(teiData), (trackerData) =>
@@ -133,6 +135,7 @@ function getSanitizedTrackerData(
   programId,
   implementingPartnerReferrence,
   subImplementingPartnerReferrence,
+  serviceProviderReference,
   users
 ) {
   return filter(
@@ -180,6 +183,13 @@ function getSanitizedTrackerData(
                   attributeObj.value !== "" &&
                   attributeObj.attribute === implementingPartnerReferrence
               );
+              const serviveProviderAttribute = find(
+                trackerObject.attributes || [],
+                (attributeObj) =>
+                  attributeObj &&
+                  attributeObj.value !== "" &&
+                  attributeObj.attribute === serviceProviderReference
+              );
               const subImplementingPartnerAttribute = find(
                 trackerObject.attributes || [],
                 (attributeObj) =>
@@ -187,61 +197,33 @@ function getSanitizedTrackerData(
                   attributeObj.value !== "" &&
                   attributeObj.attribute === subImplementingPartnerReferrence
               );
+              const attributes = getSanitizedAttribute(
+                serviveProviderAttribute,
+                implementingPartnerAttribute,
+                subImplementingPartnerAttribute,
+                trackerObject,
+                serviceProviderReference,
+                implementingPartnerReferrence,
+                subImplementingPartnerReferrence,
+                user
+              );
               sanitizedTrackerData.push({
                 ...trackerObject,
                 attributes:
-                  implementingPartnerAttribute &&
-                  subImplementingPartnerAttribute
-                    ? []
-                    : !implementingPartnerAttribute &&
-                      subImplementingPartnerAttribute
+                  attributes.length > 0
                     ? concat(
                         filter(
-                          trackerObject.attributes || [],
+                          attributes || [],
                           (attributeObj) =>
                             attributeObj &&
-                            attributeObj.dataElement !==
-                              implementingPartnerReferrence
+                            attributeObj.attribute !== serviceProviderReference
                         ),
                         {
-                          attribute: implementingPartnerReferrence,
-                          value: user.implementingPartner,
+                          attribute: serviceProviderReference,
+                          value: user.username || "",
                         }
                       )
-                    : implementingPartnerAttribute &&
-                      !subImplementingPartnerAttribute
-                    ? concat(
-                        filter(
-                          trackerObject.attributes || [],
-                          (attributeObj) =>
-                            attributeObj &&
-                            attributeObj.dataElement !==
-                              subImplementingPartnerReferrence
-                        ),
-                        {
-                          attribute: subImplementingPartnerReferrence,
-                          value: user.subImplementingPartner,
-                        }
-                      )
-                    : concat(
-                        filter(
-                          trackerObject.attributes || [],
-                          (attributeObj) =>
-                            attributeObj &&
-                            attributeObj.dataElement !==
-                              implementingPartnerReferrence &&
-                            attributeObj.dataElement !==
-                              subImplementingPartnerReferrence
-                        ),
-                        {
-                          attribute: subImplementingPartnerReferrence,
-                          value: user.subImplementingPartner,
-                        },
-                        {
-                          attribute: implementingPartnerReferrence,
-                          value: user.implementingPartner,
-                        }
-                      ),
+                    : [],
               });
             }
           }
@@ -256,7 +238,76 @@ function getSanitizedTrackerData(
   );
 }
 
+function getSanitizedAttribute(
+  serviveProviderAttribute,
+  implementingPartnerAttribute,
+  subImplementingPartnerAttribute,
+  trackerObject,
+  serviceProviderReference,
+  implementingPartnerReferrence,
+  subImplementingPartnerReferrence,
+  user
+) {
+  return implementingPartnerAttribute && subImplementingPartnerAttribute
+    ? !serviveProviderAttribute
+      ? concat(
+          filter(
+            trackerObject.attributes || [],
+            (attributeObj) =>
+              attributeObj &&
+              attributeObj.attribute !== serviceProviderReference
+          ),
+          {
+            attribute: serviceProviderReference,
+            value: user.username || "",
+          }
+        )
+      : []
+    : !implementingPartnerAttribute && subImplementingPartnerAttribute
+    ? concat(
+        filter(
+          trackerObject.attributes || [],
+          (attributeObj) =>
+            attributeObj &&
+            attributeObj.attribute !== implementingPartnerReferrence
+        ),
+        {
+          attribute: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      )
+    : implementingPartnerAttribute && !subImplementingPartnerAttribute
+    ? concat(
+        filter(
+          trackerObject.attributes || [],
+          (attributeObj) =>
+            attributeObj &&
+            attributeObj.attribute !== subImplementingPartnerReferrence
+        ),
+        {
+          attribute: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        }
+      )
+    : concat(
+        filter(
+          trackerObject.attributes || [],
+          (attributeObj) =>
+            attributeObj &&
+            attributeObj.attribute !== implementingPartnerReferrence &&
+            attributeObj.attribute !== subImplementingPartnerReferrence
+        ),
+        {
+          attribute: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        },
+        {
+          attribute: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      );
+}
+
 module.exports = {
   getAndUploadTrackerDataFromServer,
-  uploadTrackerDataToTheServer,
 };
