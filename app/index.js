@@ -63,16 +63,16 @@ async function startAppProcess() {
           tieResponse
         );
       }
-      await dhis2EventHelper.getAndUploadEventsFromServer(
-        headers,
-        serverUrl,
-        implementingPartnerDataElementReferrence,
-        subImplementingPartnerDataElementReferrence,
-        serviceProviderDataElementReference,
-        users,
-        program,
-        eventResponse
-      );
+      // await dhis2EventHelper.getAndUploadEventsFromServer(
+      //   headers,
+      //   serverUrl,
+      //   implementingPartnerDataElementReferrence,
+      //   subImplementingPartnerDataElementReferrence,
+      //   serviceProviderDataElementReference,
+      //   users,
+      //   program,
+      //   eventResponse
+      // );
     }
   } catch (error) {
     await logsHelper.addLogs(

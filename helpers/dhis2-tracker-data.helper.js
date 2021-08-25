@@ -197,62 +197,30 @@ function getSanitizedTrackerData(
                   attributeObj.value !== "" &&
                   attributeObj.attribute === subImplementingPartnerReferrence
               );
-              // @TODO proper assignment name of service provider
+              const attributes = getSanitizedAttribute(
+                serviveProviderAttribute,
+                implementingPartnerAttribute,
+                subImplementingPartnerAttribute,
+                trackerObject,
+                serviceProviderReference,
+                implementingPartnerReferrence,
+                subImplementingPartnerReferrence,
+                user
+              );
               sanitizedTrackerData.push({
                 ...trackerObject,
-                attributes:
-                  implementingPartnerAttribute &&
-                  subImplementingPartnerAttribute
-                    ? []
-                    : !implementingPartnerAttribute &&
-                      subImplementingPartnerAttribute
-                    ? concat(
-                        filter(
-                          trackerObject.attributes || [],
-                          (attributeObj) =>
-                            attributeObj &&
-                            attributeObj.dataElement !==
-                              implementingPartnerReferrence
-                        ),
-                        {
-                          attribute: implementingPartnerReferrence,
-                          value: user.implementingPartner,
-                        }
-                      )
-                    : implementingPartnerAttribute &&
-                      !subImplementingPartnerAttribute
-                    ? concat(
-                        filter(
-                          trackerObject.attributes || [],
-                          (attributeObj) =>
-                            attributeObj &&
-                            attributeObj.dataElement !==
-                              subImplementingPartnerReferrence
-                        ),
-                        {
-                          attribute: subImplementingPartnerReferrence,
-                          value: user.subImplementingPartner,
-                        }
-                      )
-                    : concat(
-                        filter(
-                          trackerObject.attributes || [],
-                          (attributeObj) =>
-                            attributeObj &&
-                            attributeObj.dataElement !==
-                              implementingPartnerReferrence &&
-                            attributeObj.dataElement !==
-                              subImplementingPartnerReferrence
-                        ),
-                        {
-                          attribute: subImplementingPartnerReferrence,
-                          value: user.subImplementingPartner,
-                        },
-                        {
-                          attribute: implementingPartnerReferrence,
-                          value: user.implementingPartner,
-                        }
-                      ),
+                attributes: attributes.length > 0 ? concat(
+                  filter(
+                    attributes || [],
+                    (attributeObj) =>
+                      attributeObj &&
+                      attributeObj.attribute !== serviceProviderReference
+                  ),
+                  {
+                    attribute: serviceProviderReference,
+                    value: user.username || "",
+                  }
+                ) : [],
               });
             }
           }
@@ -271,3 +239,72 @@ module.exports = {
   getAndUploadTrackerDataFromServer,
   uploadTrackerDataToTheServer,
 };
+function getSanitizedAttribute(
+  serviveProviderAttribute,
+  implementingPartnerAttribute,
+  subImplementingPartnerAttribute,
+  trackerObject,
+  serviceProviderReference,
+  implementingPartnerReferrence,
+  subImplementingPartnerReferrence,
+  user
+) {
+  return implementingPartnerAttribute && subImplementingPartnerAttribute
+    ? !serviveProviderAttribute
+      ? concat(
+          filter(
+            trackerObject.attributes || [],
+            (attributeObj) =>
+              attributeObj &&
+              attributeObj.attribute !== serviceProviderReference
+          ),
+          {
+            attribute: serviceProviderReference,
+            value: user.username || "",
+          }
+        )
+      : []
+    : !implementingPartnerAttribute && subImplementingPartnerAttribute
+    ? concat(
+        filter(
+          trackerObject.attributes || [],
+          (attributeObj) =>
+            attributeObj &&
+            attributeObj.attribute !== implementingPartnerReferrence
+        ),
+        {
+          attribute: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      )
+    : implementingPartnerAttribute && !subImplementingPartnerAttribute
+    ? concat(
+        filter(
+          trackerObject.attributes || [],
+          (attributeObj) =>
+            attributeObj &&
+            attributeObj.attribute !== subImplementingPartnerReferrence
+        ),
+        {
+          attribute: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        }
+      )
+    : concat(
+        filter(
+          trackerObject.attributes || [],
+          (attributeObj) =>
+            attributeObj &&
+            attributeObj.attribute !== implementingPartnerReferrence &&
+            attributeObj.attribute !== subImplementingPartnerReferrence
+        ),
+        {
+          attribute: subImplementingPartnerReferrence,
+          value: user.subImplementingPartner,
+        },
+        {
+          attribute: implementingPartnerReferrence,
+          value: user.implementingPartner,
+        }
+      );
+}

@@ -43,7 +43,7 @@ async function getDhis2ResourcePaginationFromServer(
       "getDhis2ResourcePaginationFromServer"
     );
   }
-  return _.flattenDeep(paginationFilters);
+  return _.chunk(_.flattenDeep(paginationFilters), 1)[0];
 }
 
 function getHttpAuthorizationHeader(username, password) {
