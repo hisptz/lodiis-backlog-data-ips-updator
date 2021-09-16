@@ -103,8 +103,8 @@ async function getAndUploadTrackerDataFromServer(
           omit(trackerData, ["enrollments"])
         );
         if (data.length > 0) {
-          sanitizedTrackerData.push(data);
-          writeToFile("output", programName, sanitizedTrackerData);
+          //sanitizedTrackerData.push(data);
+          //writeToFile("output", programName, sanitizedTrackerData);
           const response = await uploadTrackerDataToTheServer(
             headers,
             serverUrl,
@@ -113,11 +113,11 @@ async function getAndUploadTrackerDataFromServer(
           );
           tieResponse.push(response);
           const date = dhis2UtilHelper.getFormattedDate(new Date());
-          writeToFile(
-            "response",
-            `[${programName}] tracker server response ${date}`,
-            flattenDeep(tieResponse)
-          );
+          // writeToFile(
+          //   "response",
+          //   `[${programName}] tracker server response ${date}`,
+          //   flattenDeep(tieResponse)
+          // );
         }
       }
     }

@@ -99,8 +99,8 @@ async function getAndUploadEventsFromServer(
           omit(event, ["createdByUserInfo", "storedBy"])
         );
         if (data.length > 0) {
-          sanitizedEvents.push(data);
-          writeToFile("output", programName, sanitizedEvents);
+          //sanitizedEvents.push(data);
+         // writeToFile("output", programName, sanitizedEvents);
           const response = await uploadEventsToTheServer(
             headers,
             serverUrl,
@@ -108,12 +108,12 @@ async function getAndUploadEventsFromServer(
             programName
           );
           const date = dhis2UtilHelper.getFormattedDate(new Date());
-          eventResponse.push(response);
-          writeToFile(
-            "response",
-            `[${programName}] server response ${date}`,
-            flattenDeep(eventResponse)
-          );
+          // eventResponse.push(response);
+          //  writeToFile(
+          //   "response",
+          //   `[${programName}] server response ${date}`,
+          //   flattenDeep(eventResponse)
+          // );
         }
       }
     }
