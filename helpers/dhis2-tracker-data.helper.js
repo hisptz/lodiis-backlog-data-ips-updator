@@ -38,7 +38,7 @@ async function uploadTrackerDataToTheServer(
         const response = await httpHelper.postHttp(headers, url, {
           trackedEntityInstances,
         });
-        serverResponse.push(response);
+        // serverResponse.push(response);
       } catch (error) {
         console.log(error.message || error);
       }

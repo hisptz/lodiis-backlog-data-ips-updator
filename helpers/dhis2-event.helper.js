@@ -34,7 +34,7 @@ async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
           const response = await httpHelper.postHttp(headers, url, {
             events: eventData,
           });
-          serverResponse.push(response);
+         // serverResponse.push(response);
         }
       } catch (error) {
         console.log(error.message || error);
