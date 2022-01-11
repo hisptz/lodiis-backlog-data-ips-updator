@@ -15,9 +15,8 @@ const dhis2EventHelper = require("../helpers/dhis2-event.helper");
 const dhis2UtilHelper = require("../helpers/dhis2-util.helper");
 const logsHelper = require("../helpers/logs.helper");
 const dhis2TrackerDataHelper = require("../helpers/dhis2-tracker-data.helper");
-const { writeToFile } = require("../helpers/file-manipulation.helper");
 
-async function startAppProcess() {
+async function startAppProcess(shouldUpdateAllData) {
     const implementingPartnerOptionSetId = "mMUDhf2vSwq";
     const subImplementingPartnerOptionSetId = "WMIYg0XjfJz";
     try {
@@ -55,23 +54,23 @@ async function startAppProcess() {
                 await dhis2TrackerDataHelper.getAndUploadTrackerDataFromServer(
                     headers,
                     serverUrl,
+                    shouldUpdateAllData,
                     implementingPartnerAttributeReferrence,
                     subImplementingPartnerAttributeReferrence,
                     serviceProviderAttributeReference,
                     users,
-                    program,
-                    tieResponse
+                    program
                 );
             }
             await dhis2EventHelper.getAndUploadEventsFromServer(
                 headers,
                 serverUrl,
+                shouldUpdateAllData,
                 implementingPartnerDataElementReferrence,
                 subImplementingPartnerDataElementReferrence,
                 serviceProviderDataElementReference,
                 users,
-                program,
-                eventResponse
+                program
             );
         }
     } catch (error) {

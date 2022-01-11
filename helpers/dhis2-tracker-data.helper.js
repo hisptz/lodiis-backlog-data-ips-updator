@@ -38,7 +38,6 @@ async function uploadTrackerDataToTheServer(
                 const response = await httpHelper.postHttp(headers, url, {
                     trackedEntityInstances,
                 });
-                // serverResponse.push(response);
             } catch (error) {
                 console.log(error.message || error);
             }
@@ -56,12 +55,12 @@ async function uploadTrackerDataToTheServer(
 async function getAndUploadTrackerDataFromServer(
     headers,
     serverUrl,
+    shouldUpdateAllData,
     implementingPartnerReferrence,
     subImplementingPartnerReferrence,
     serviceProviderReference,
     users,
-    program,
-    tieResponse
+    program
 ) {
     const fields = `fields=created,trackedEntityInstance,trackedEntityType,orgUnit,attributes[attribute,value],enrollments[storedBy,createdByUserInfo[uid,username],program,orgUnit,status,trackedEntityInstance,enrollment,trackedEntityType,incidentDate,enrollmentDate]`;
     try {
@@ -102,14 +101,12 @@ async function getAndUploadTrackerDataFromServer(
                     omit(trackerData, ["enrollments"])
                 );
                 if (data.length > 0) {
-                    const response = await uploadTrackerDataToTheServer(
+                    await uploadTrackerDataToTheServer(
                         headers,
                         serverUrl,
                         data,
                         programName
                     );
-                    tieResponse.push(response);
-                    const date = dhis2UtilHelper.getFormattedDate(new Date());
                 }
             }
         }
