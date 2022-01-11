@@ -1,6 +1,7 @@
 const app = require("./app");
 
 const logsHelper = require("./helpers/logs.helper");
+const indexOfShouldUpdateAllData = 2;
 
 startApp();
 async function startApp() {
@@ -11,7 +12,8 @@ async function startApp() {
             `Start of script for generating ips for events`,
             "startApp"
         );
-        await app.startAppProcess();
+        const shouldUpdateAllData = process.argv[indexOfShouldUpdateAllData] ? process.argv[indexOfShouldUpdateAllData] === "true" : false;
+        await app.startAppProcess(shouldUpdateAllData);
         await logsHelper.addLogs(
             "info",
             `End of script for generating ips for events`,

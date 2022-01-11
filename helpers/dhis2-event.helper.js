@@ -9,7 +9,6 @@ const {
 } = require("lodash");
 
 const dhis2UtilHelper = require("./dhis2-util.helper");
-const { writeToFile } = require("./file-manipulation.helper");
 const httpHelper = require("./http.helper");
 const logsHelper = require("./logs.helper");
 
@@ -34,7 +33,6 @@ async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
                     const response = await httpHelper.postHttp(headers, url, {
                         events: eventData,
                     });
-                    // serverResponse.push(response);
                 }
             } catch (error) {
                 console.log(error.message || error);
@@ -53,12 +51,12 @@ async function uploadEventsToTheServer(headers, serverUrl, data, programName) {
 async function getAndUploadEventsFromServer(
     headers,
     serverUrl,
+    shouldUpdateAllData,
     implementingPartnerReferrence,
     subImplementingPartnerReferrence,
     serviceProviderReference,
     users,
-    program,
-    eventResponse
+    program
 ) {
     try {
         const fields = `fields=storedBy,event,eventDate,enrollment,program,programStage,orgUnit,createdByUserInfo[uid,username],trackedEntityInstance,status,dataValues[value,dataElement]`;
@@ -98,21 +96,12 @@ async function getAndUploadEventsFromServer(
                     omit(event, ["createdByUserInfo", "storedBy"])
                 );
                 if (data.length > 0) {
-                    //sanitizedEvents.push(data);
-                    // writeToFile("output", programName, sanitizedEvents);
-                    const response = await uploadEventsToTheServer(
+                    await uploadEventsToTheServer(
                         headers,
                         serverUrl,
                         data,
                         programName
                     );
-                    const date = dhis2UtilHelper.getFormattedDate(new Date());
-                    // eventResponse.push(response);
-                    //  writeToFile(
-                    //   "response",
-                    //   `[${programName}] server response ${date}`,
-                    //   flattenDeep(eventResponse)
-                    // );
                 }
             }
         }
@@ -204,16 +193,13 @@ function getSanitizedEvents(
                                 dataElement: serviceProviderReference,
                                 value: user.username || "",
                             }
-                        ) :
-                        [];
+                        ) : [];
                 }
             }
-            return dataValues.length > 0 ?
-                {
-                    ...eventObj,
-                    dataValues,
-                } :
-                [];
+            return dataValues.length > 0 ? {
+                ...eventObj,
+                dataValues,
+            } : [];
         })
     );
 }
@@ -239,8 +225,7 @@ function getEventDataValues(
                 dataElement: serviceProviderReference,
                 value: user.username || "",
             }
-        ) :
-        [] :
+        ) : [] :
         !implementingPartnerDataValue && subImplementingPartnerDataValue ?
         concat(
             filter(
