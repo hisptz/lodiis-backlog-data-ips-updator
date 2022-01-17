@@ -91,6 +91,7 @@ async function getAndUploadTrackerDataFromServer(
             if (response && response.trackedEntityInstances) {
                 const teiData = getSanitizedTrackerData(
                     response.trackedEntityInstances || [],
+                    shouldUpdateAllData,
                     programId,
                     implementingPartnerReferrence,
                     subImplementingPartnerReferrence,
@@ -121,6 +122,7 @@ async function getAndUploadTrackerDataFromServer(
 
 function getSanitizedTrackerData(
     trackerData,
+    shouldUpdateAllData,
     programId,
     implementingPartnerReferrence,
     subImplementingPartnerReferrence,
@@ -187,6 +189,7 @@ function getSanitizedTrackerData(
                                 attributeObj.attribute === subImplementingPartnerReferrence
                             );
                             const attributes = getSanitizedAttribute(
+                                shouldUpdateAllData,
                                 serviveProviderAttribute,
                                 implementingPartnerAttribute,
                                 subImplementingPartnerAttribute,
@@ -225,6 +228,7 @@ function getSanitizedTrackerData(
 }
 
 function getSanitizedAttribute(
+    shouldUpdateAllData,
     serviveProviderAttribute,
     implementingPartnerAttribute,
     subImplementingPartnerAttribute,
@@ -234,6 +238,7 @@ function getSanitizedAttribute(
     subImplementingPartnerReferrence,
     user
 ) {
+    //@TODO adding logic for updating all
     return implementingPartnerAttribute && subImplementingPartnerAttribute ?
         !serviveProviderAttribute ?
         concat(

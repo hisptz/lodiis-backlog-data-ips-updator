@@ -48,8 +48,6 @@ async function startAppProcess(shouldUpdateAllData) {
             subImplementingPartnerOptions
         );
         for (const program of programs) {
-            const tieResponse = [];
-            const eventResponse = [];
             if (program.isTrackerBased) {
                 await dhis2TrackerDataHelper.getAndUploadTrackerDataFromServer(
                     headers,
