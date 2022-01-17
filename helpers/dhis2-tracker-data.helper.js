@@ -25,6 +25,7 @@ async function uploadTrackerDataToTheServer(
     let count = 0;
     const serverResponse = [];
     try {
+        data = _.map(data, (dataObj) => _.omit(dataObj, ["enrollments"]));
         const url = `${serverUrl}/api/trackedEntityInstances?strategy=CREATE_AND_UPDATE`;
         const total = chunk(data, uploadPageSize).length;
         for (const trackedEntityInstances of chunk(data, uploadPageSize)) {
@@ -238,8 +239,29 @@ function getSanitizedAttribute(
     subImplementingPartnerReferrence,
     user
 ) {
-    //@TODO adding logic for updating all
-    return implementingPartnerAttribute && subImplementingPartnerAttribute ?
+    return shouldUpdateAllData ?
+        concat(
+            filter(
+                trackerObject.attributes || [],
+                (attributeObj) =>
+                attributeObj &&
+                ![
+                    serviceProviderReference,
+                    implementingPartnerReferrence,
+                    subImplementingPartnerReferrence,
+                ].includes(attributeObj.attribute)
+            ), {
+                attribute: serviceProviderReference,
+                value: user.username || "",
+            }, {
+                attribute: implementingPartnerReferrence,
+                value: user.implementingPartner,
+            }, {
+                attribute: subImplementingPartnerReferrence,
+                value: user.subImplementingPartner,
+            }
+        ) :
+        implementingPartnerAttribute && subImplementingPartnerAttribute ?
         !serviveProviderAttribute ?
         concat(
             filter(

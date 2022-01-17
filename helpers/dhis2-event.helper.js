@@ -213,8 +213,29 @@ function getEventDataValues(
     implementingPartnerReferrence,
     subImplementingPartnerReferrence
 ) {
-    //@TODO adding logic for updating all
-    return implementingPartnerDataValue && subImplementingPartnerDataValue ?
+    return shouldUpdateAllData ?
+        concat(
+            filter(
+                eventObj.dataValues || [],
+                (dataValue) =>
+                dataValue &&
+                ![
+                    serviceProviderReference,
+                    implementingPartnerReferrence,
+                    subImplementingPartnerReferrence,
+                ].includes(dataValue.dataElement)
+            ), {
+                dataElement: serviceProviderReference,
+                value: user.username || "",
+            }, {
+                dataElement: implementingPartnerReferrence,
+                value: user.implementingPartner,
+            }, {
+                dataElement: subImplementingPartnerReferrence,
+                value: user.subImplementingPartner,
+            }
+        ) :
+        implementingPartnerDataValue && subImplementingPartnerDataValue ?
         !serviveProviderDataValue ?
         concat(
             filter(
