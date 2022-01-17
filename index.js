@@ -12,7 +12,9 @@ async function startApp() {
             `Start of script for generating ips for events`,
             "startApp"
         );
-        const shouldUpdateAllData = process.argv[indexOfShouldUpdateAllData] ? process.argv[indexOfShouldUpdateAllData] === "true" : false;
+        const shouldUpdateAllData = process.argv[indexOfShouldUpdateAllData] ?
+            process.argv[indexOfShouldUpdateAllData] === "true" :
+            false;
         await app.startAppProcess(shouldUpdateAllData);
         await logsHelper.addLogs(
             "info",

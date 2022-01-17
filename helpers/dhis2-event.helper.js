@@ -87,6 +87,7 @@ async function getAndUploadEventsFromServer(
             if (response && response.events) {
                 const events = getSanitizedEvents(
                     response.events || [],
+                    shouldUpdateAllData,
                     implementingPartnerReferrence,
                     subImplementingPartnerReferrence,
                     serviceProviderReference,
@@ -96,12 +97,7 @@ async function getAndUploadEventsFromServer(
                     omit(event, ["createdByUserInfo", "storedBy"])
                 );
                 if (data.length > 0) {
-                    await uploadEventsToTheServer(
-                        headers,
-                        serverUrl,
-                        data,
-                        programName
-                    );
+                    await uploadEventsToTheServer(headers, serverUrl, data, programName);
                 }
             }
         }
@@ -116,6 +112,7 @@ async function getAndUploadEventsFromServer(
 
 function getSanitizedEvents(
     events,
+    shouldUpdateAllData,
     implementingPartnerReferrence,
     subImplementingPartnerReferrence,
     serviceProviderReference,
@@ -172,6 +169,7 @@ function getSanitizedEvents(
                         dataValue.dataElement === serviceProviderReference
                     );
                     dataValues = getEventDataValues(
+                        shouldUpdateAllData,
                         serviveProviderDataValue,
                         implementingPartnerDataValue,
                         subImplementingPartnerDataValue,
@@ -205,6 +203,7 @@ function getSanitizedEvents(
 }
 
 function getEventDataValues(
+    shouldUpdateAllData,
     serviveProviderDataValue,
     implementingPartnerDataValue,
     subImplementingPartnerDataValue,
@@ -214,7 +213,29 @@ function getEventDataValues(
     implementingPartnerReferrence,
     subImplementingPartnerReferrence
 ) {
-    return implementingPartnerDataValue && subImplementingPartnerDataValue ?
+    return shouldUpdateAllData ?
+        concat(
+            filter(
+                eventObj.dataValues || [],
+                (dataValue) =>
+                dataValue &&
+                ![
+                    serviceProviderReference,
+                    implementingPartnerReferrence,
+                    subImplementingPartnerReferrence,
+                ].includes(dataValue.dataElement)
+            ), {
+                dataElement: serviceProviderReference,
+                value: user.username || "",
+            }, {
+                dataElement: implementingPartnerReferrence,
+                value: user.implementingPartner,
+            }, {
+                dataElement: subImplementingPartnerReferrence,
+                value: user.subImplementingPartner,
+            }
+        ) :
+        implementingPartnerDataValue && subImplementingPartnerDataValue ?
         !serviveProviderDataValue ?
         concat(
             filter(
