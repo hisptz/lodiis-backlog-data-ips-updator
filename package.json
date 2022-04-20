@@ -1,28 +1,32 @@
 {
-  "name": "kb-ip-update",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "format": "prettier --write \"*.js\"  \"*/*.js\"  \"*.json\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "GPL-3.0-or-later",
-  "description": "",
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
+    "name": "kb-backlog-data-ips-updator",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "format": "prettier --write \"*.js\"  \"*/*.js\"  \"*.json\"",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "GPL-3.0-or-later",
+    "description": "",
+    "config": {
+        "commitizen": {
+            "path": "./node_modules/cz-conventional-changelog"
+        }
+    },
+    "dependencies": {
+        "-": "^0.0.1",
+        "changelog": "^1.4.2",
+        "commitizen": "^4.2.4",
+        "conventional": "^0.2.9",
+        "cz": "^1.8.2",
+        "cz-conventional-changelog": "^3.3.0",
+        "lodash": "^4.17.21",
+        "moment": "^2.29.3",
+        "prettier": "^2.6.2",
+        "promise": "^8.1.0",
+        "request": "^2.88.2",
+        "shelljs": "^0.8.5",
+        "xlsx": "^0.17.5"
     }
-  },
-  "dependencies": {
-    "commitizen": "^4.2.2",
-    "cz-conventional-changelog": "^3.3.0",
-    "lodash": "^4.17.20",
-    "moment": "^2.29.1",
-    "prettier": "^2.2.1",
-    "promise": "^8.1.0",
-    "request": "^2.88.2",
-    "shelljs": "^0.8.4",
-    "xlsx": "^0.17.0"
-  }
 }
