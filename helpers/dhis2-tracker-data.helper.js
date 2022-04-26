@@ -25,7 +25,7 @@ async function uploadTrackerDataToTheServer(
     let count = 0;
     const serverResponse = [];
     try {
-        data = _.map(data, (dataObj) => _.omit(dataObj, ["enrollments"]));
+        data = map(data, (dataObj) => omit(dataObj, ["enrollments"]));
         const url = `${serverUrl}/api/trackedEntityInstances?strategy=CREATE_AND_UPDATE`;
         const total = chunk(data, uploadPageSize).length;
         for (const trackedEntityInstances of chunk(data, uploadPageSize)) {
