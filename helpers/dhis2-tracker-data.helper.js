@@ -239,7 +239,7 @@ function getSanitizedAttribute(
     subImplementingPartnerReferrence,
     user
 ) {
-    return shouldUpdateAllData ?
+    return shouldUpdateAllData || user.username === 'scriptrunner' ?
         concat(
             filter(
                 trackerObject.attributes || [],

@@ -213,7 +213,7 @@ function getEventDataValues(
     implementingPartnerReferrence,
     subImplementingPartnerReferrence
 ) {
-    return shouldUpdateAllData ?
+    return shouldUpdateAllData || user.username === 'scriptrunner' ?
         concat(
             filter(
                 eventObj.dataValues || [],
